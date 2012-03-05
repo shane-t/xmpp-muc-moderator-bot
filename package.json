@@ -1,0 +1,23 @@
+{ "name": "xmpp-muc-moderator-bot"
+,"version": "0.0.0"
+,"main": "index.js"
+,"description": "A bot written in node.js to manage moderation of MUC rooms"
+,"author": "Shane T Odlum"
+,"dependencies": {"jquery": "1.6.3"
+},"devDependencies": {"jsdom": ">= 0.2.0"
+                    ,"jslint": ">= 0.1.2"
+}
+,"repositories": [{"type": "git"
+		  ,"path": "git://github.com/shane-t/xmpp-muc-moderator-bot.git"
+		  }]
+,"homepage": "https://github.com/shane-t/xmpp-muc-moderator-bot"
+,"bugs": "https://github.com/shane-t/xmpp-muc-moderator-bot/issues"
+,"maintainers": [{"name": "Shane T. Odlum"
+		 ,"email": "muldots@gmail.com"
+		 }
+]
+,"licenses": [{"type": "MIT"}]
+,"engines": {
+	    "node": ">=0.4.1"
+	    }
+}
