@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+
+* {
+	font-family: Tahoma, Arial;
+}
+
+div:not(#container)  {
+	border: 1px solid #ccc;
+}
+
+
+
+.room {
+	background: #77DD77;
+	margin-bottom: 50px;
+	width: 50%;
+}
+
+#log {
+	width: 45%;
+	position: fixed;
+	right: 0px;
+	height: 600px;
+	border: 1px solid black;
+	background: black;
+	color: white; 
+}
+
+
+.roster {
+	background:  #63D1F4;
+}
+
+.val {
+	font-weight: bold;
+}
+
+.roster > ul > li, .playlist > ul> li {
+	border: 1px solid black;
+	list-style: none;
+	margin: 10px;
+}
+
+
+</style>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+<script>
+
+function obj2ULtree (obj, depth) {
+	if (typeof depth=='undefined') {depth=0};
+	if (typeof obj=='object' && obj ) {
+		var html='<ul>';
+		for (var item in obj) {
+			if (obj.hasOwnProperty(item) && obj[item] != "function" ) {
+				html+='<li>'+item+': ';
+				html+=(typeof obj[item]=='object' && obj[item] && depth<10)?
+				obj2ULtree(obj[item], (depth+1)): '<span class="val">' + obj[item] + '</span>';
+				html+='</li>';
+			}
+		}
+	}
+	return html+'</ul>';
+}
+
+function formatstate(state) {
+	var rooms = state.rooms;
+
+	var html = "<div id='rooms'>";
+
+for (var room in rooms) {
+    html += "<div class='room' data-jid='" + room + "'>";
+	html += "<h1>JID: " + room + "</h1>";
+	if (rooms[room].config) {
+		html += "Subject: " + rooms[room].config.subject + "<br/>";
+	}
+	html += "Roster: <br/>";
+    	html += "<div class='roster'>";
+    		html += obj2ULtree(rooms[room].roster);
+    	html += "</div>";
+    html += "</div>";
+}
+
+return html;
+
+}
+
+  var socket = io.connect('http://localhost/');
+  socket.on('info', function (data) {
+  	console.log(data);
+	if(data.state) {
+		var html1 = formatstate(data.state);
+		$('#showme').html(html1); //.find('.roster li:not(li li)').css('border', '1px solid #000');
+	}
+  });
+
+  socket.on('log', function (data) {
+	if (data.log) {
+		var html = "<li>"  + data.log + "</li>";
+	}
+	logbox = $('#log');
+	logbox.append(html);
+	if (logbox.find('li').length > 20) {
+		logbox.find(">:first-child").remove();
+	}
+
+
+ });		
+
+</script>
+</head>
+<body>
+<div id="container">
+<div id="log">
+<ul>
+</ul>
+</div>
+
+<div id="showme">
+</div>
+</div>
+</html>

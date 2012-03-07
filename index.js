@@ -1,13 +1,90 @@
 /*jslint devel: true, node: true, sloppy: true, nomen: true, maxerr: 50, indent: 4 */
 
-var dutil = require("src/dutil.js");
+var dutil = require("./src/dutil.js");
 var http = require('http');
 var querystring = require('querystring');
-var io = require('socket.io').listen();
 var fs = require('fs');
 
+/* DEBUG */
+
+var dev = require('http').createServer(dev_handler);
+var io = require('socket.io').listen(dev);
+dev.listen(54321);
+
+function dev_handler (req, res) {
+    fs.readFile(__dirname + '/index.html',
+        function (err, data) {
+            if (err) {
+                res.writeHead(500);
+                return res.end('Error loading index.html');
+            }
+
+        res.writeHead(200);
+        res.end(data);
+    });
+}
+
+function censor(key, value) {
+	try {
+		//console.log(key, value);
+    		if (key == "connection" || key[0] == "_") {
+        		return "(circular)";
+    		} else if (key == "msg_log" && value.length > 0) {
+			log = [];
+			for (var i in value) {
+				log.push(Strophe.serialize(value[i]));i
+			}
+			return log;
+    		} else if (typeof(value) == "function") {
+        		return "function";
+    		} 
+    		return value;
+	} catch(e) {
+		return "error";
+	}
+}
+
+function dump_state (obj) {
+	console.log("state");
+	try {
+		var state = JSON.parse(JSON.stringify(obj, censor));
+		io.sockets.emit('info', { state: state });
+	} catch (e) {
+		console.log(e);
+		io.sockets.emit('info', { error: 'error' });
+	}
+}
+
+io.sockets.on('connection', function (socket) {
+    socket.emit('info', { time: new Date().getTime() });
+    socket.on('request', function (data) {
+        console.log(data);
+    });
+
+    socket.on('eval', function (data) {
+	try {
+		eval(data.code);
+	} catch (e) {
+		konsole.log(e);
+	}
+    });
+
+});
+
+setInterval( function () {
+	dump_state(steward);
+	console.log("...");
+}, 5000);
+
+
+/* END_DEBUG */
+
+
+
+
+
 var $ = require('jquery');
-var strophe = require("strophe/strophe.js").Strophe;
+var strophe = require("./strophe/strophe.js").Strophe;
 var Strophe = strophe.Strophe;
 var $iq = strophe.$iq;
 var $msg = strophe.$msg;
@@ -17,7 +94,7 @@ var steward;
 
 function Steward(bosh_url, user, pass, muc_domain) {
     this.connection = new Strophe.Connection(bosh_url);
-    this.user = user;
+    this.jid = user;
     this.pass = pass;
     this.muc_domain = muc_domain;
     this.connection.xmlInput = function (xml) {
@@ -36,12 +113,8 @@ function Steward(bosh_url, user, pass, muc_domain) {
 setInterval( function () {
     console.log("...");
 }, 5000);
-
-setTimeout( function ()  {
-    steward = new Steward();
-    steward.connect();
-}, 4000);
 */
+
 
 Steward.prototype = {
 
@@ -560,15 +633,15 @@ Room.prototype = {
 
 };
 
-
+/*
 http.createServer(function (req, res) {
-
+    console.log("roomserv");
     var url = req.url,
         qs = querystring.parse(url);
     res.writeHead(200, 'application/json');
 
-    if (qs.action === "new_room" && qs.md5.length > 0) {
-        steward.create_room(qs.md5 + steward.muc_domain, function (info) {
+    if (qs.action === "new_room" && qs.node.length > 0) {
+        steward.create_room(qs.node + "@" + steward.muc_domain, function (info) {
             res.write(info);
             res.end();
         });
@@ -578,3 +651,6 @@ http.createServer(function (req, res) {
 
 
 }).listen(12345);
+*/
+
+exports.steward = steward;
